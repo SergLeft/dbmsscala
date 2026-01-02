@@ -547,7 +547,7 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
 
     // validation check - what to do if no values/attributes? use parent method (should work as intended for the tests?)
     if (!attributeMin.contains(selectionAttribute) || !attributeMax.contains(selectionAttribute)){
-      super.filterByScan(outputAttribute, selectionAttribute, requiredValue)
+      return super.filterByScan(outputAttribute, selectionAttribute, requiredValue)
     }
 
     // actual exercise question
@@ -564,7 +564,7 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
 
     // Validation check as above
     if (!attributeMin.contains(selectionAttribute) || !attributeMax.contains(selectionAttribute)) {
-      super.filterRangeByScan(outputAttribute, selectionAttribute, inclusiveLowerKey, exclusiveUpperKey)
+      return super.filterRangeByScan(outputAttribute, selectionAttribute, inclusiveLowerKey, exclusiveUpperKey)
     }
 
     if (exclusiveUpperKey < minimum(selectionAttribute) || inclusiveLowerKey > maximum(selectionAttribute)) {
