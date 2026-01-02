@@ -480,6 +480,30 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
     recordID
   }
 
+  /** Overrides the second appendRecord method 
+  * (couldn't streamline it to make it work by calling the first without an overflow)
+  * so basically re-did the top for the TableRecord version
+  */
+  override def appendRecord(record: TableRecord): RecordID = {
+    // add parent method and capture recordID
+    val recordID = super.appendRecord(record)
+    
+    // update the statistics in the Maps for each attribute in the records
+    schema.foreach { attr =>
+      val value = record.getValue(attr)
+      
+      // min update
+      if (!attributeMin.contains(attr) || value < attributeMin(attr)) {
+        attributeMin(attr) = value
+      }
+      // max update
+      if (!attributeMax.contains(attr) || value > attributeMax(attr)) {
+        attributeMax(attr) = value
+      }
+    }
+    recordID
+  }
+
   // bulk loading constructor for this case too, because why not?
   def this(attributes: Seq[String], initialRecords: Seq[TableRecord]) = {
     this(attributes)
