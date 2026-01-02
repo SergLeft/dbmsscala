@@ -480,18 +480,18 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
     recordID
   }
 
-  /** Overrides the second appendRecord method 
+  /** Overrides the second appendRecord method
   * (couldn't streamline it to make it work by calling the first without an overflow)
   * so basically re-did the top for the TableRecord version
   */
   override def appendRecord(record: TableRecord): RecordID = {
     // add parent method and capture recordID
     val recordID = super.appendRecord(record)
-    
+
     // update the statistics in the Maps for each attribute in the records
     schema.foreach { attr =>
       val value = record.getValue(attr)
-      
+
       // min update
       if (!attributeMin.contains(attr) || value < attributeMin(attr)) {
         attributeMin(attr) = value
@@ -544,8 +544,15 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
 
   // filterByScan overriding:
   override def filterByScan(outputAttribute: String, selectionAttribute: String, requiredValue: Value): Table = {
+
+    // validation check - what to do if no values/attributes? use parent method (should work as intended for the tests?)
+    if (!attributeMin.contains(selectionAttribute) || !attributeMax.contains(selectionAttribute)){
+      super.filterByScan(outputAttribute, selectionAttribute, requiredValue)
+    }
+
+    // actual exercise question
     if (minimum(selectionAttribute) > requiredValue || maximum(selectionAttribute) < requiredValue) {
-      new Table(schema)
+      new Table(Seq(outputAttribute))
     } else {
       super.filterByScan(outputAttribute, selectionAttribute, requiredValue)
     }
@@ -554,8 +561,14 @@ class StatsTable(attributes: Seq[String]) extends Table(attributes) {
   // filterRangeByScan overriding:
   override def filterRangeByScan(outputAttribute: String, selectionAttribute: String,
                                  inclusiveLowerKey: Value, exclusiveUpperKey: Value): Table = {
+
+    // Validation check as above
+    if (!attributeMin.contains(selectionAttribute) || !attributeMax.contains(selectionAttribute)) {
+      super.filterRangeByScan(outputAttribute, selectionAttribute, inclusiveLowerKey, exclusiveUpperKey)
+    }
+
     if (exclusiveUpperKey < minimum(selectionAttribute) || inclusiveLowerKey > maximum(selectionAttribute)) {
-      new Table(schema)
+      new Table(Seq(outputAttribute))
     } else {
       super.filterRangeByScan(outputAttribute, selectionAttribute, inclusiveLowerKey, exclusiveUpperKey)
     }
