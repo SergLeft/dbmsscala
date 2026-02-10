@@ -31,16 +31,101 @@ class UnbalancedSearchTree[K, V](ord: Ordering[K]) {
 
   private var root: Option[Node[K, V]] = None
 
-  def size: Int = ???
+  /** Tracks number of elements, size is O(1) */
+  private var numElements: Int = 0
+  
+  /** Returns number of key-value pairs in tree
+   * 
+   * @return size of tree
+   */
+  def size: Int = numElements
 
-  def clear(): Unit = ???
+  /** Removes all elements from the tree. */
+  def clear(): Unit = {
+    root = None
+    numElements = 0
+  }
 
-  def addOrUpdate(key: K, value: V): Unit = ???
+  /** Adds a new key-value pair or updates value if key already existant.
+   * 
+   * @param key the key to add or update
+   * @param value the value to add or update
+   */
+  def addOrUpdate(key: K, value: V): Unit = {
+    root match{
+      case None => 
+        root = Some(leaf(key, value))
+        numElements += 1
+      case Some(node) =>
+        addOrUpdate(node, key, value)
+      
+    }
+  }
+  
+  /** Convenience method to add tuple. Used by companion object's apply method */
+  private def addOrUpdate(node: Node[K, V], key: K, value: V): Unit = addOrUpdate(tuple._1, tuple._2)
+  
+  /** Recursive helper for addOrUpdate
+   * 
+   * @param node the current node being examined
+   * @param key the key to add or update
+   * @param value the value to add or update
+   */
+  @tailrec
+  private def addOrUpdate(node: Node[K, V], key: K, value: V): Unit = {
+    if (ord.lt(key, node.key)) {
+      // key < node.key go left
+      node.left match {
+        case None =>
+          node.left = Some(leaf(key, value))
+          numElements += 1
+        case Some(leftChild) =>
+          addOrUpdate(leftChild, key, value)
+      }
+    } else if (ord.gt(key, node.key)) {
+      // key > node.key go right
+      node.right match {
+        case None =>
+          node.right = Some(leaf(key, value))
+          numElements += 1
+        case Some(rightChild) =>
+          addOrUpdate(rightChild, key, value)
+      }
+    } else {
+      // key == node.key update value
+      node.value = value
+    }
+  }
 
 
-  def get(key: K): Option[V] = ???
+  /** Returns the value associated with the given key, or None, if not found
+   * 
+   * @param key the key to search for
+   * @return the value associated with the given key, or None, if not found
+   */
+  def get(key: K): Option[V] = {
+    @tailrec
+    def search(current: Option[Node[K, V]]): Option[V] = {
+      current match {
+        case None => None
+        case Some(node) =>
+          if (ord.equiv(key, node.key)) Some(node.value)
+          else if (ord.lt(key, node.key)) search(node.left)
+          else search(node.right)
+      }
+    }
+    search(root)
+  }
 
-  def apply(key: K): V = ???
+  /** Returns the value associated with the given key, or throws an exception, if not found
+   * 
+   * @param key the key to search for
+   * @return the value associated with the given key, or throws an exception, if not found
+   * @throws NoSuchElementException if the key is not found
+   */
+  def apply(key: K): V = {
+    get(key).getOrElse(throw new NoSuchElementException(s"Key $key not found"))
+  }
 
 
 }
