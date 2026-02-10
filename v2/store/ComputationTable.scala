@@ -48,8 +48,7 @@ class ComputationTable(schema: Schema) extends Table(schema) {
         val doubleValue = value match {
           case LongType(l) => l.toDouble
           case DoubleType(d) => d
-          case StringType(_) => 
-            throw new IllegalArgumentException(s"Cannot convert string to double")
+          // StringType is already ruled out by validation in Step 3
         }
         varName -> doubleValue
       }.toMap

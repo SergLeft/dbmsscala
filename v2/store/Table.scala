@@ -226,7 +226,9 @@ class Table(val schema: Schema) extends Iterable[TableRecord] {
   /** Returns a new table that is sorted by the given attribute */
   def sortBy(attribute: String): Table = {
     if (!schema.contains(attribute))
-      throw new IllegalArgumentException(s"Attribute $attribute not found in schema")
+      throw new IllegalArgumentException(
+        s"Attribute $attribute not found in schema. Available attributes: ${schema.attributes.mkString(", ")}"
+      )
     
     val sortedRecords = records.sortBy(record => record.getValue(attribute))
     Table(schema, sortedRecords)
@@ -236,7 +238,9 @@ class Table(val schema: Schema) extends Iterable[TableRecord] {
   def sortBy(attributes: Seq[String]): Table = {
     attributes.foreach { attr =>
       if (!schema.contains(attr))
-        throw new IllegalArgumentException(s"Attribute $attr not found in schema")
+        throw new IllegalArgumentException(
+          s"Attribute $attr not found in schema. Available attributes: ${schema.attributes.mkString(", ")}"
+        )
     }
     
     val sortedRecords = records.sortBy { record =>

@@ -1,6 +1,9 @@
 package dbms.v2.run
 
 import dbms.v2.misc.Variant
+
+  // In German grading system, 4.0 or below is passing
+  private val PASSING_GRADE_THRESHOLD = 4.0
 import dbms.v2.store.Table
 
 
