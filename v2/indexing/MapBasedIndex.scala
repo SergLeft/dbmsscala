@@ -48,4 +48,16 @@ abstract class MapBasedIndex(table: Table, attribute: String) extends IsIndex {
           
     index.getOrElse(key, Seq())   
   }
+
+  /** Returns a string representation of this index.
+   *
+   *  Each line shows one indexed value and the row(s) in which it occurs.
+   *
+   *  @return a formatted multi-line string listing all indexed values and their row IDs
+   */
+  override def toString: String = index
+    .toSeq
+    .sorted
+    .map((value, recordIDs) => s"value $value occurs in row(s) ${recordIDs.mkString(", ")}\n")
+    .mkString("")
 }

@@ -27,10 +27,4 @@ class TreeIndex(table: Table, attribute: String) extends MapBasedIndex(table, at
       .flatMap((key, recordIDs) => recordIDs)
       .toSeq
   }
-
-  /** Returns a string representation of this index. */
-  override def toString: String = index
-    .toSeq
-    .sorted
-    .map((value, idString) => s"value $value occurs in row(s) $idString\n").mkString("")
 }
