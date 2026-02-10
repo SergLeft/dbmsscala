@@ -192,11 +192,62 @@ class Table(val schema: Schema) extends Iterable[TableRecord] {
   override def toString: String = records.mkString("Table:\n", "\n", "")
 
   /** Joins two tables sharing exactly one attribute. */
-  def naturalJoin(other: Table): Table = ???
+  def naturalJoin(other: Table): Table = {
+    // Find the common attribute (should be exactly one)
+    val commonAttributes = this.schema.attributes.intersect(other.schema.attributes)
+    
+    if (commonAttributes.size != 1)
+      throw new IllegalArgumentException(
+        s"Natural join requires exactly one common attribute, found ${commonAttributes.size}"
+      )
+    
+    val joinAttribute = commonAttributes.head
+    
+    // Create the new schema by combining both schemas (common attribute appears once)
+    val thisAttrs = this.schema.toSeq
+    val otherAttrs = other.schema.toSeq.filterNot((attr, _) => attr == joinAttribute)
+    val newSchema = Schema(thisAttrs ++ otherAttrs)
+    
+    // Perform the join: for each record in this table, find matching records in other table
+    val joinedRecords = for {
+      thisRecord <- this.records
+      otherRecord <- other.records
+      if thisRecord.getValue(joinAttribute) == otherRecord.getValue(joinAttribute)
+    } yield {
+      // Combine the records
+      val thisValues = thisRecord.toSeq
+      val otherValues = otherRecord.toSeq.filterNot((attr, _) => attr == joinAttribute)
+      TableRecord(thisValues ++ otherValues)
+    }
+    
+    Table(newSchema, joinedRecords)
+  }
 
-  /** Returns a new table that is sorted by the given attributes */
-  def sortBy(attribute: String): Table = ???
+  /** Returns a new table that is sorted by the given attribute */
+  def sortBy(attribute: String): Table = {
+    if (!schema.contains(attribute))
+      throw new IllegalArgumentException(
+        s"Attribute $attribute not found in schema. Available attributes: ${schema.attributes.mkString(", ")}"
+      )
+    
+    val sortedRecords = records.sortBy(record => record.getValue(attribute))
+    Table(schema, sortedRecords)
+  }
 
-  /** Returns a new table that is sorted by the given attributes */
-  def sortBy(attributes: Seq[String]): Table = ???
+  /** Returns a new table that is sorted by the given attributes (in order of priority) */
+  def sortBy(attributes: Seq[String]): Table = {
+    attributes.foreach { attr =>
+      if (!schema.contains(attr))
+        throw new IllegalArgumentException(
+          s"Attribute $attr not found in schema. Available attributes: ${schema.attributes.mkString(", ")}"
+        )
+    }
+    
+    val sortedRecords = records.sortBy { record =>
+      // Create a tuple of values for multi-key sorting
+      attributes.map(attr => record.getValue(attr))
+    }(Ordering.Implicits.seqOrdering)
+    
+    Table(schema, sortedRecords)
+  }
 }

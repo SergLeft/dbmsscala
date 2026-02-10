@@ -21,6 +21,41 @@ class ComputationTable(schema: Schema) extends Table(schema) {
    * @throws IllegalArgumentException if the computation references an unknown column
    * @throws IllegalArgumentException if the computation references a non-numeric column
    */
-  def compute(computation: Expression): Seq[Double] = ???
+  def compute(computation: Expression): Seq[Double] = {
+    // Step 1: Get all variables referenced in the expression
+    val variables = referencedVariables(computation)
+    
+    // Step 2: Validate that all referenced variables are columns in the schema
+    variables.foreach { varName =>
+      if (!schema.contains(varName))
+        throw new IllegalArgumentException(s"Unknown column: $varName")
+    }
+    
+    // Step 3: Validate that all referenced columns are numeric (Long or Double)
+    variables.foreach { varName =>
+      schema.getDataType(varName) match {
+        case DBType.Long | DBType.Double => // OK, numeric
+        case DBType.String => 
+          throw new IllegalArgumentException(s"Non-numeric column: $varName")
+      }
+    }
+    
+    // Step 4: Evaluate the expression for each record
+    records.map { record =>
+      // Build a Map[String, Double] from the record's attributes
+      val variableBindings: Map[String, Double] = variables.map { varName =>
+        val value = record.getValue(varName)
+        val doubleValue = value match {
+          case LongType(l) => l.toDouble
+          case DoubleType(d) => d
+          // StringType is already ruled out by validation in Step 3
+        }
+        varName -> doubleValue
+      }.toMap
+      
+      // Evaluate the expression with these bindings
+      evaluate(computation, variableBindings)
+    }.toSeq
+  }
 
 }

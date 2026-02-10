@@ -33,8 +33,28 @@ def referencedVariables(ex: Expression): Set[String] = ex match {
  *  @return the simplified expression
  */
 protected def simplified(ex: Expression): Expression = ex match {
+  // Addition with zero: 0 + x = x, x + 0 = x
   case BinaryOperation("+", Constant(0), term)            => term
   case BinaryOperation("+", term, Constant(0))            => term
+  
+  // Multiplication with zero: 0 * x = 0, x * 0 = 0
+  case BinaryOperation("*", Constant(0), _)               => Constant(0)
+  case BinaryOperation("*", _, Constant(0))               => Constant(0)
+  
+  // Multiplication with one: 1 * x = x, x * 1 = x
+  case BinaryOperation("*", Constant(1), term)            => term
+  case BinaryOperation("*", term, Constant(1))            => term
+  
+  // Double negation: --x = x
+  case UnaryOperation("-", UnaryOperation("-", inner))    => inner
+  
+  // Absolute of absolute: abs(abs(x)) = abs(x)
+  case UnaryOperation("abs", inner @ UnaryOperation("abs", _)) => inner
+  
+  // Negation of constant: -c = Constant(-c)
+  case UnaryOperation("-", Constant(c))                   => Constant(-c)
+  
+  // No simplification possible
   case _ => ex
 }
 
